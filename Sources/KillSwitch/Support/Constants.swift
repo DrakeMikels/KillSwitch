@@ -6,6 +6,7 @@ enum AppConstants {
     static let bundleIdentifier = "com.killswitch.app"
     static let menuBarImageName = "KillSwitchToggleIcon"
     static let menuBarImageExtension = "pdf"
+    static let applicationIconName = "AppIcon"
     static let popoverScale: CGFloat = 0.918
     static let popoverWidth: CGFloat = 372 * popoverScale
     static let popoverFallbackHeight: CGFloat = 560 * popoverScale

@@ -98,5 +98,4 @@ The release workflow generates the cask file for you once the repo slug and rele
 - Choose the Homebrew tap repository slug
 - Choose an open-source license
 - Wire the updater path
-- Add a real app icon set
 - Finalize signing and notarization secrets for release builds

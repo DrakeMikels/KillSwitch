@@ -158,7 +158,11 @@ final class MenuBarViewModel: ObservableObject {
 
     func openAboutPanel() {
         NSApp.activate(ignoringOtherApps: true)
-        NSApp.orderFrontStandardAboutPanel(nil)
+        let aboutOptions: [NSApplication.AboutPanelOptionKey: Any] = [
+            .applicationIcon: AppIconProvider.applicationIconImage(),
+            .applicationName: AppConstants.appName,
+        ]
+        NSApp.orderFrontStandardAboutPanel(aboutOptions)
     }
 
     func checkForUpdates() {

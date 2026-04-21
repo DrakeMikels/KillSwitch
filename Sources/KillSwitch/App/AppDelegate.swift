@@ -29,6 +29,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
+        NSApp.applicationIconImage = AppIconProvider.applicationIconImage()
         let showDockIcon = appServices.settingsStore.settings.showDockIcon
         DockIconController.apply(showDockIcon: showDockIcon)
         configureStatusItem()

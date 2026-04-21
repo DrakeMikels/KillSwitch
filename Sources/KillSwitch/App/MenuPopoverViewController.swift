@@ -418,7 +418,6 @@ private final class SummaryCardView: CardContainerView {
     private let titleLabel = NSTextField(labelWithString: "Unified Memory")
     private let valueLabel = NSTextField(labelWithString: "")
     private let availableLabel = NSTextField(labelWithString: "")
-    private let pressureBadge = NSTextField(labelWithString: "")
     private let meter = MeterBarView()
     private let footerLabel = NSTextField(labelWithString: "Memory in use")
     private let percentLabel = NSTextField(labelWithString: "")
@@ -436,9 +435,6 @@ private final class SummaryCardView: CardContainerView {
     func update(snapshot: MemorySnapshot) {
         valueLabel.stringValue = "\(Formatters.memory(snapshot.usedBytes)) / \(Formatters.memory(snapshot.totalBytes))"
         availableLabel.stringValue = "\(Formatters.memory(snapshot.availableBytes)) available"
-        pressureBadge.stringValue = snapshot.pressureLevel.title
-        pressureBadge.backgroundColor = pressureBadgeColor(for: snapshot.pressureLevel)
-        pressureBadge.textColor = .white
         percentLabel.stringValue = Formatters.percent(snapshot.usedPercent)
         meter.progress = snapshot.usedPercent
         meter.fillColors = MenuPopoverColors.pressureGradient(for: snapshot.pressureLevel)
@@ -452,29 +448,17 @@ private final class SummaryCardView: CardContainerView {
         availableLabel.font = .systemFont(ofSize: MenuPopoverScale.font(12))
         availableLabel.textColor = .secondaryLabelColor
 
-        pressureBadge.font = .systemFont(ofSize: MenuPopoverScale.font(12), weight: .semibold)
-        pressureBadge.alignment = .center
-        pressureBadge.wantsLayer = true
-        pressureBadge.layer?.cornerRadius = MenuPopoverScale.metric(12)
-        pressureBadge.layer?.masksToBounds = true
-        pressureBadge.lineBreakMode = .byClipping
-        pressureBadge.translatesAutoresizingMaskIntoConstraints = false
-
         footerLabel.font = .systemFont(ofSize: MenuPopoverScale.font(12))
         footerLabel.textColor = .secondaryLabelColor
         percentLabel.font = .systemFont(ofSize: MenuPopoverScale.font(12), weight: .semibold)
         percentLabel.textColor = .secondaryLabelColor
-
-        let topRow = NSStackView(views: [titleLabel, NSView.spacer(), pressureBadge])
-        topRow.orientation = .horizontal
-        topRow.alignment = .centerY
 
         let bottomRow = NSStackView(views: [footerLabel, NSView.spacer(), percentLabel])
         bottomRow.orientation = .horizontal
         bottomRow.alignment = .centerY
 
         let stack = NSStackView(views: [
-            topRow,
+            titleLabel,
             valueLabel,
             availableLabel,
             meter,
@@ -488,8 +472,6 @@ private final class SummaryCardView: CardContainerView {
         contentView.addSubview(stack)
 
         NSLayoutConstraint.activate([
-            pressureBadge.widthAnchor.constraint(greaterThanOrEqualToConstant: MenuPopoverScale.metric(96)),
-            pressureBadge.heightAnchor.constraint(equalToConstant: MenuPopoverScale.metric(30)),
             meter.heightAnchor.constraint(equalToConstant: MenuPopoverScale.metric(12)),
             stack.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: MenuPopoverLayout.sectionCardInset),
             stack.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -MenuPopoverLayout.sectionCardInset),
@@ -497,20 +479,6 @@ private final class SummaryCardView: CardContainerView {
             stack.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -MenuPopoverLayout.sectionCardInset),
         ])
     }
-
-    private func pressureBadgeColor(for level: PressureLevel) -> NSColor {
-        switch level {
-        case .normal:
-            return .systemGreen
-        case .elevated:
-            return .systemYellow
-        case .high:
-            return NSColor(calibratedRed: 0.72, green: 0.48, blue: 0.19, alpha: 1)
-        case .critical:
-            return .systemRed
-        }
-    }
-
 }
 
 private final class ApplicationsSectionView: CardContainerView {

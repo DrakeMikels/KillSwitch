@@ -14,9 +14,9 @@ KillSwitch is packaged from GitHub Actions and intended to ship as a GitHub Rele
 2. Stages `KillSwitch.app`
 3. Optionally signs the app when a Developer ID certificate is available
 4. Optionally notarizes and staples the app when Apple credentials are available
-5. Zips the bundle as `KillSwitch.zip`
-6. Generates `killswitch.rb` using the actual release checksum
-7. Uploads both files to the GitHub Release
+5. Packages the bundle as both `KillSwitch.zip` and `KillSwitch.dmg`
+6. Generates `killswitch.rb` using the actual zip checksum
+7. Uploads all release artifacts to the GitHub Release
 
 ## Required release secrets
 
@@ -56,7 +56,7 @@ Recommended flow:
 1. Create a tap repository such as `homebrew-tools` or `homebrew-killswitch`
 2. Add the tap secrets above if you want GitHub Actions to update the tap automatically
 3. Push a release tag such as `v0.1.0`
-4. Let the workflow publish `KillSwitch.zip` and `killswitch.rb`
+4. Let the workflow publish `KillSwitch.zip`, `KillSwitch.dmg`, and `killswitch.rb`
 5. If tap automation is configured, the workflow commits the cask into the tap for you
 6. Install with `brew install --cask <tap>/killswitch`
 

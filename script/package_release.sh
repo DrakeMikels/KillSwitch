@@ -15,6 +15,7 @@ APP_RESOURCES="$APP_CONTENTS/Resources"
 APP_BINARY="$APP_MACOS/$APP_NAME"
 INFO_PLIST="$APP_CONTENTS/Info.plist"
 ZIP_PATH="$DIST_DIR/$APP_NAME.zip"
+DMG_PATH="$DIST_DIR/$APP_NAME.dmg"
 
 resolve_developer_dir() {
   if [[ -n "${DEVELOPER_DIR:-}" ]] && [[ -d "$DEVELOPER_DIR" ]]; then
@@ -95,8 +96,35 @@ if [[ -n "${CODESIGN_IDENTITY:-}" ]]; then
     "$APP_BUNDLE"
 fi
 
-rm -f "$ZIP_PATH"
-/usr/bin/ditto -c -k --sequesterRsrc --keepParent "$APP_BUNDLE" "$ZIP_PATH"
+package_zip() {
+  rm -f "$ZIP_PATH"
+  /usr/bin/ditto -c -k --sequesterRsrc --keepParent "$APP_BUNDLE" "$ZIP_PATH"
+}
+
+package_dmg() {
+  local dmg_staging
+  dmg_staging="$(mktemp -d "$DIST_DIR/dmg-staging.XXXXXX")"
+  rm -f "$DMG_PATH"
+  cp -R "$APP_BUNDLE" "$dmg_staging/"
+  hdiutil create \
+    -volname "$APP_NAME" \
+    -srcfolder "$dmg_staging" \
+    -ov \
+    -format UDZO \
+    "$DMG_PATH" \
+    >/dev/null
+  rm -rf "$dmg_staging"
+
+  if [[ -n "${CODESIGN_IDENTITY:-}" ]]; then
+    codesign \
+      --force \
+      --timestamp \
+      --sign "$CODESIGN_IDENTITY" \
+      "$DMG_PATH"
+  fi
+}
+
+package_zip
 
 if [[ -n "${APPLE_ID:-}" && -n "${APPLE_TEAM_ID:-}" && -n "${APPLE_APP_SPECIFIC_PASSWORD:-}" ]]; then
   xcrun notarytool submit \
@@ -108,9 +136,22 @@ if [[ -n "${APPLE_ID:-}" && -n "${APPLE_TEAM_ID:-}" && -n "${APPLE_APP_SPECIFIC_
 
   xcrun stapler staple "$APP_BUNDLE"
 
-  rm -f "$ZIP_PATH"
-  /usr/bin/ditto -c -k --sequesterRsrc --keepParent "$APP_BUNDLE" "$ZIP_PATH"
+  package_zip
+  package_dmg
+
+  xcrun notarytool submit \
+    "$DMG_PATH" \
+    --apple-id "$APPLE_ID" \
+    --team-id "$APPLE_TEAM_ID" \
+    --password "$APPLE_APP_SPECIFIC_PASSWORD" \
+    --wait
+
+  xcrun stapler staple "$DMG_PATH"
+else
+  package_dmg
 fi
 
 printf 'Packaged %s\n' "$ZIP_PATH"
 shasum -a 256 "$ZIP_PATH"
+printf 'Packaged %s\n' "$DMG_PATH"
+shasum -a 256 "$DMG_PATH"

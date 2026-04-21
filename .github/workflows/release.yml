@@ -85,6 +85,7 @@ jobs:
           name: killswitch-release-${{ steps.version.outputs.value }}
           path: |
             dist/release/KillSwitch.zip
+            dist/release/KillSwitch.dmg
             dist/release/killswitch.rb
 
       - name: Publish GitHub Release assets
@@ -100,6 +101,7 @@ jobs:
 
           gh release upload "$TAG" \
             dist/release/KillSwitch.zip \
+            dist/release/KillSwitch.dmg \
             dist/release/killswitch.rb \
             --clobber
 

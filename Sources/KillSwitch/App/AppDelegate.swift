@@ -64,7 +64,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func configurePopover(viewModel: MenuBarViewModel) {
         popover.behavior = .transient
-        popover.animates = false
+        popover.animates = true
         popover.delegate = self
         popover.appearance = NSAppearance(named: .darkAqua)
 

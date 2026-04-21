@@ -61,7 +61,10 @@ jobs:
           security set-keychain-settings -lut 21600 "$TEMP_KEYCHAIN"
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$TEMP_KEYCHAIN"
           security import "$CERT_PATH" -k "$TEMP_KEYCHAIN" -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign -T /usr/bin/security
-          security list-keychain -d user -s "$TEMP_KEYCHAIN"
+          security list-keychain -d user -s \
+            "$TEMP_KEYCHAIN" \
+            /Library/Keychains/System.keychain \
+            "$HOME/Library/Keychains/login.keychain-db"
           security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" "$TEMP_KEYCHAIN"
 
       - name: Package release app

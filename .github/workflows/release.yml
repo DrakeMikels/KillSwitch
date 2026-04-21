@@ -45,13 +45,17 @@ jobs:
         run: xcodebuild -version
 
       - name: Import Developer ID certificate
-        if: ${{ secrets.APPLE_DEVELOPER_ID_CERTIFICATE_P12 != '' }}
         shell: bash
         env:
           CERTIFICATE_P12: ${{ secrets.APPLE_DEVELOPER_ID_CERTIFICATE_P12 }}
           CERTIFICATE_PASSWORD: ${{ secrets.APPLE_DEVELOPER_ID_CERTIFICATE_PASSWORD }}
-          KEYCHAIN_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+          KEYCHAIN_PASSWORD: ${{ github.token }}
         run: |
+          if [[ -z "${CERTIFICATE_P12}" || -z "${CERTIFICATE_PASSWORD}" ]]; then
+            echo "Developer ID certificate secrets are not configured; skipping keychain import."
+            exit 0
+          fi
+
           TEMP_KEYCHAIN="$RUNNER_TEMP/killswitch-signing.keychain-db"
           CERT_PATH="$RUNNER_TEMP/developer-id.p12"
 

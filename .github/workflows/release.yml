@@ -1,0 +1,151 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Release version without the leading v
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    outputs:
+      version: ${{ steps.version.outputs.value }}
+    runs-on: macos-15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Resolve release version
+        id: version
+        shell: bash
+        run: |
+          if [[ "${GITHUB_REF_TYPE:-}" == "tag" ]]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            VERSION="${{ inputs.version }}"
+          fi
+
+          if [[ -z "$VERSION" ]]; then
+            echo "Release version is required." >&2
+            exit 1
+          fi
+
+          echo "value=$VERSION" >>"$GITHUB_OUTPUT"
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Import Developer ID certificate
+        if: ${{ secrets.APPLE_DEVELOPER_ID_CERTIFICATE_P12 != '' }}
+        shell: bash
+        env:
+          CERTIFICATE_P12: ${{ secrets.APPLE_DEVELOPER_ID_CERTIFICATE_P12 }}
+          CERTIFICATE_PASSWORD: ${{ secrets.APPLE_DEVELOPER_ID_CERTIFICATE_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TEMP_KEYCHAIN="$RUNNER_TEMP/killswitch-signing.keychain-db"
+          CERT_PATH="$RUNNER_TEMP/developer-id.p12"
+
+          echo "$CERTIFICATE_P12" | base64 --decode >"$CERT_PATH"
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$TEMP_KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$TEMP_KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$TEMP_KEYCHAIN"
+          security import "$CERT_PATH" -k "$TEMP_KEYCHAIN" -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign -T /usr/bin/security
+          security list-keychain -d user -s "$TEMP_KEYCHAIN"
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" "$TEMP_KEYCHAIN"
+
+      - name: Package release app
+        shell: bash
+        env:
+          CODESIGN_IDENTITY: ${{ secrets.APPLE_DEVELOPER_ID_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+        run: ./script/package_release.sh "${{ steps.version.outputs.value }}"
+
+      - name: Generate Homebrew cask
+        shell: bash
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: ./script/render_cask.sh "${{ steps.version.outputs.value }}" "dist/release/KillSwitch.zip" "dist/release/killswitch.rb"
+
+      - name: Upload release artifacts to workflow run
+        uses: actions/upload-artifact@v4
+        with:
+          name: killswitch-release-${{ steps.version.outputs.value }}
+          path: |
+            dist/release/KillSwitch.zip
+            dist/release/killswitch.rb
+
+      - name: Publish GitHub Release assets
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="v${{ steps.version.outputs.value }}"
+
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            gh release create "$TAG" --title "KillSwitch $TAG" --generate-notes
+          fi
+
+          gh release upload "$TAG" \
+            dist/release/KillSwitch.zip \
+            dist/release/killswitch.rb \
+            --clobber
+
+  publish-homebrew-cask:
+    needs: package
+    if: ${{ secrets.HOMEBREW_TAP_REPOSITORY != '' && secrets.HOMEBREW_TAP_GITHUB_TOKEN != '' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download release artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: killswitch-release-${{ needs.package.outputs.version }}
+          path: dist/release
+
+      - name: Check out Homebrew tap
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ secrets.HOMEBREW_TAP_REPOSITORY }}
+          token: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}
+          path: tap
+
+      - name: Install generated cask into tap
+        shell: bash
+        env:
+          CASK_DESTINATION: ${{ vars.HOMEBREW_TAP_CASK_PATH }}
+        run: |
+          DESTINATION="${CASK_DESTINATION:-Casks/killswitch.rb}"
+          mkdir -p "$(dirname "tap/$DESTINATION")"
+          cp dist/release/killswitch.rb "tap/$DESTINATION"
+
+      - name: Commit and push tap update
+        shell: bash
+        working-directory: tap
+        env:
+          CASK_DESTINATION: ${{ vars.HOMEBREW_TAP_CASK_PATH }}
+        run: |
+          DESTINATION="${CASK_DESTINATION:-Casks/killswitch.rb}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if [[ -z "$(git status --porcelain -- "$DESTINATION")" ]]; then
+            echo "No cask changes to commit."
+            exit 0
+          fi
+
+          git add "$DESTINATION"
+          git commit -m "Update KillSwitch cask for v${{ needs.package.outputs.version }}"
+          git push

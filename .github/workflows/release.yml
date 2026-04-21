@@ -113,24 +113,40 @@ jobs:
 
   publish-homebrew-cask:
     needs: package
-    if: ${{ secrets.HOMEBREW_TAP_REPOSITORY != '' && secrets.HOMEBREW_TAP_GITHUB_TOKEN != '' }}
     runs-on: ubuntu-latest
+    env:
+      HOMEBREW_TAP_REPOSITORY: ${{ secrets.HOMEBREW_TAP_REPOSITORY }}
+      HOMEBREW_TAP_GITHUB_TOKEN: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}
 
     steps:
+      - name: Resolve tap publishing
+        id: tap
+        shell: bash
+        run: |
+          if [[ -z "${HOMEBREW_TAP_REPOSITORY}" || -z "${HOMEBREW_TAP_GITHUB_TOKEN}" ]]; then
+            echo "enabled=false" >>"$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "enabled=true" >>"$GITHUB_OUTPUT"
+
       - name: Download release artifacts
+        if: ${{ steps.tap.outputs.enabled == 'true' }}
         uses: actions/download-artifact@v4
         with:
           name: killswitch-release-${{ needs.package.outputs.version }}
           path: dist/release
 
       - name: Check out Homebrew tap
+        if: ${{ steps.tap.outputs.enabled == 'true' }}
         uses: actions/checkout@v4
         with:
-          repository: ${{ secrets.HOMEBREW_TAP_REPOSITORY }}
-          token: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}
+          repository: ${{ env.HOMEBREW_TAP_REPOSITORY }}
+          token: ${{ env.HOMEBREW_TAP_GITHUB_TOKEN }}
           path: tap
 
       - name: Install generated cask into tap
+        if: ${{ steps.tap.outputs.enabled == 'true' }}
         shell: bash
         env:
           CASK_DESTINATION: ${{ vars.HOMEBREW_TAP_CASK_PATH }}
@@ -140,6 +156,7 @@ jobs:
           cp dist/release/killswitch.rb "tap/$DESTINATION"
 
       - name: Commit and push tap update
+        if: ${{ steps.tap.outputs.enabled == 'true' }}
         shell: bash
         working-directory: tap
         env:

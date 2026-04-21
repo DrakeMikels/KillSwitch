@@ -16,6 +16,7 @@ APP_BINARY="$APP_MACOS/$APP_NAME"
 INFO_PLIST="$APP_CONTENTS/Info.plist"
 ZIP_PATH="$DIST_DIR/$APP_NAME.zip"
 DMG_PATH="$DIST_DIR/$APP_NAME.dmg"
+API_KEY_PATH="$DIST_DIR/AuthKey.p8"
 
 resolve_developer_dir() {
   if [[ -n "${DEVELOPER_DIR:-}" ]] && [[ -d "$DEVELOPER_DIR" ]]; then
@@ -126,30 +127,50 @@ package_dmg() {
 
 package_zip
 
-if [[ -n "${APPLE_ID:-}" && -n "${APPLE_TEAM_ID:-}" && -n "${APPLE_APP_SPECIFIC_PASSWORD:-}" ]]; then
-  xcrun notarytool submit \
-    "$ZIP_PATH" \
-    --apple-id "$APPLE_ID" \
-    --team-id "$APPLE_TEAM_ID" \
-    --password "$APPLE_APP_SPECIFIC_PASSWORD" \
-    --wait
+notary_submit() {
+  local artifact_path="$1"
+
+  if [[ -n "${APPLE_API_KEY_P8:-}" && -n "${APPLE_API_KEY_ID:-}" && -n "${APPLE_API_ISSUER_ID:-}" ]]; then
+    if [[ ! -f "$API_KEY_PATH" ]]; then
+      printf '%s' "$APPLE_API_KEY_P8" >"$API_KEY_PATH"
+      chmod 600 "$API_KEY_PATH"
+    fi
+
+    xcrun notarytool submit \
+      "$artifact_path" \
+      --key "$API_KEY_PATH" \
+      --key-id "$APPLE_API_KEY_ID" \
+      --issuer "$APPLE_API_ISSUER_ID" \
+      --wait
+    return
+  fi
+
+  if [[ -n "${APPLE_ID:-}" && -n "${APPLE_TEAM_ID:-}" && -n "${APPLE_APP_SPECIFIC_PASSWORD:-}" ]]; then
+    xcrun notarytool submit \
+      "$artifact_path" \
+      --apple-id "$APPLE_ID" \
+      --team-id "$APPLE_TEAM_ID" \
+      --password "$APPLE_APP_SPECIFIC_PASSWORD" \
+      --wait
+  fi
+}
+
+if [[ -n "${APPLE_API_KEY_P8:-}" && -n "${APPLE_API_KEY_ID:-}" && -n "${APPLE_API_ISSUER_ID:-}" ]] || [[ -n "${APPLE_ID:-}" && -n "${APPLE_TEAM_ID:-}" && -n "${APPLE_APP_SPECIFIC_PASSWORD:-}" ]]; then
+  notary_submit "$ZIP_PATH"
 
   xcrun stapler staple "$APP_BUNDLE"
 
   package_zip
   package_dmg
 
-  xcrun notarytool submit \
-    "$DMG_PATH" \
-    --apple-id "$APPLE_ID" \
-    --team-id "$APPLE_TEAM_ID" \
-    --password "$APPLE_APP_SPECIFIC_PASSWORD" \
-    --wait
+  notary_submit "$DMG_PATH"
 
   xcrun stapler staple "$DMG_PATH"
 else
   package_dmg
 fi
+
+rm -f "$API_KEY_PATH"
 
 printf 'Packaged %s\n' "$ZIP_PATH"
 shasum -a 256 "$ZIP_PATH"

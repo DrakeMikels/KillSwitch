@@ -20,11 +20,22 @@ KillSwitch is packaged from GitHub Actions and intended to ship as a GitHub Rele
 
 ## Required release secrets
 
-These are only needed for signed and notarized releases:
+These are needed for signed releases:
 
 - `APPLE_DEVELOPER_ID_CERTIFICATE_P12`
 - `APPLE_DEVELOPER_ID_CERTIFICATE_PASSWORD`
 - `APPLE_DEVELOPER_ID_IDENTITY`
+
+For notarization, configure one of these credential sets:
+
+App Store Connect API key:
+
+- `APPLE_API_KEY_P8`
+- `APPLE_API_KEY_ID`
+- `APPLE_API_ISSUER_ID`
+
+Apple ID with app-specific password:
+
 - `APPLE_ID`
 - `APPLE_TEAM_ID`
 - `APPLE_APP_SPECIFIC_PASSWORD`

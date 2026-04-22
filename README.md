@@ -4,7 +4,7 @@ KillSwitch is a lightweight macOS menu bar utility for seeing memory pressure an
 
 Built in Swift and SwiftUI, KillSwitch gives you a fast, native way to spot memory-heavy apps and gracefully quit them without opening Activity Monitor.
 
-![KillSwitch popover](docs/images/killswitch-popover.png)
+![KillSwitch popover](docs/images/killswitch-popover-v1-0-2.png)
 
 KillSwitch also includes a built-in Sparkle updater for silent background checks and standard macOS update prompts.
 

@@ -137,7 +137,14 @@ jobs:
       - name: Commit and push latest appcast
         shell: bash
         run: |
-          cp dist/release/appcast.xml appcast.xml
+          APPCAST_SOURCE="$(find dist/release -name appcast.xml -print -quit)"
+          if [[ -z "$APPCAST_SOURCE" ]]; then
+            echo "appcast.xml was not found in the downloaded release artifact." >&2
+            find dist/release -maxdepth 3 -type f -print
+            exit 1
+          fi
+
+          cp "$APPCAST_SOURCE" appcast.xml
 
           if git diff --quiet -- appcast.xml; then
             echo "Appcast is already up to date."

@@ -5,17 +5,17 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
     <title>KillSwitch</title>
     <link>https://github.com/DrakeMikels/KillSwitch</link>
     <item>
-      <title>1.0.1</title>
-      <pubDate>Wed, 22 Apr 2026 00:14:17 +0000</pubDate>
-      <link>https://github.com/DrakeMikels/KillSwitch/releases/tag/v1.0.1</link>
-      <sparkle:version>1.0.1</sparkle:version>
-      <sparkle:shortVersionString>1.0.1</sparkle:shortVersionString>
+      <title>1.0.2</title>
+      <pubDate>Wed, 22 Apr 2026 00:31:12 +0000</pubDate>
+      <link>https://github.com/DrakeMikels/KillSwitch/releases/tag/v1.0.2</link>
+      <sparkle:version>1.0.2</sparkle:version>
+      <sparkle:shortVersionString>1.0.2</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
       <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
-      <enclosure url="https://github.com/DrakeMikels/KillSwitch/releases/download/v1.0.1/KillSwitch.zip" length="1649653" type="application/octet-stream" sparkle:edSignature="vM3Stpth2Z1WUloVdkDx8x14mlOFrsbUX5Kg4I9xX0vzCl9zaVdCJP9X7PojMX7h5RHx8c5Po3ksfU2+0bLSAg=="></enclosure>
+      <enclosure url="https://github.com/DrakeMikels/KillSwitch/releases/download/v1.0.2/KillSwitch.zip" length="2718345" type="application/octet-stream" sparkle:edSignature="B0uHi4buc+AV/hSJgog+M0zjLkq1Tck7wfuDjx6kd+78YgFtLIVxDOn2nrqHuir+Cqt3UhbS2JEmSqiN1zIBAA=="></enclosure>
     </item>
   </channel>
 </rss><!-- sparkle-signatures:
-edSignature: 1+qJ8GkOfq7k3jYT+kx/uQ4/u26epNbX5fuTDR5WWA0pjXDtaQYyU4+pv+UmfX32J6+yaUlvmlZPbW8Nt1/pCw==
+edSignature: SIz6+fo3lolrrkuikqOHOfbSp4uTaMPboTpx2I8MWSo9PHqFJNdqY50HiJIS1/M3k5vhIgyq10u/wdzBb9mUCA==
 length: 1209
 -->

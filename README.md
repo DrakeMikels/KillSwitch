@@ -6,12 +6,14 @@ Built in Swift and SwiftUI, KillSwitch gives you a fast, native way to spot memo
 
 ![KillSwitch popover](docs/images/killswitch-popover.png)
 
+KillSwitch also includes a built-in Sparkle updater for silent background checks and standard macOS update prompts.
+
 ## What it does
 
 - Shows current unified memory usage at a glance
-- Maps the current system state to a pressure badge
 - Lists the top memory-using user apps
 - Lets you request a normal app quit without skipping save prompts
+- Includes an in-app updater with background update checks
 - Stays in the menu bar instead of becoming another window-heavy dashboard
 
 ## Current status
@@ -25,6 +27,12 @@ The app shell is up and running locally with:
 - settings window
 - local build/run script
 - Sparkle-based in-app update checks with silent background checking
+
+## Updates
+
+KillSwitch ships with a Sparkle-based in-app updater. Once a user is on a current release, the app can check for updates in the background and present the standard macOS install-and-relaunch flow when a new version is available.
+
+Users on older pre-updater builds need one manual upgrade through Homebrew or the latest GitHub Release before in-app updating takes over.
 
 ## Requirements
 

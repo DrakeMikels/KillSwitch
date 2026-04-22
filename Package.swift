@@ -12,9 +12,18 @@ let package = Package(
             targets: ["KillSwitch"]
         ),
     ],
+    dependencies: [
+        .package(
+            url: "https://github.com/sparkle-project/Sparkle",
+            exact: "2.9.1"
+        ),
+    ],
     targets: [
         .executableTarget(
             name: "KillSwitch",
+            dependencies: [
+                .product(name: "Sparkle", package: "Sparkle"),
+            ],
             path: "Sources/KillSwitch"
         ),
     ]

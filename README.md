@@ -24,8 +24,7 @@ The app shell is up and running locally with:
 - graceful quit buttons
 - settings window
 - local build/run script
-
-`Check for Updates…` is intentionally stubbed until the release updater path is wired.
+- Sparkle-based in-app update checks with silent background checking
 
 ## Requirements
 
@@ -76,6 +75,7 @@ The repo includes GitHub Actions for:
 - CI builds on macOS
 - Packaging a release `.app` into a zip artifact
 - Optional signing and notarization when Apple secrets are present
+- Generating and publishing a Sparkle `appcast.xml` feed for in-app updates
 - Generating a Homebrew cask file from the release artifact checksum
 - Optionally publishing that cask into a Homebrew tap when tap secrets are present
 
@@ -97,5 +97,4 @@ The release workflow generates the cask file for you once the repo slug and rele
 - Choose the public GitHub repo slug
 - Choose the Homebrew tap repository slug
 - Choose an open-source license
-- Wire the updater path
 - Finalize signing and notarization secrets for release builds

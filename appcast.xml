@@ -1,0 +1,21 @@
+<?xml version="1.0" standalone="yes"?><!-- sparkle-sign-warning:
+IMPORTANT: This file was signed by Sparkle. Any modifications to this file requires re-signing this file with generate_appcast or sign_update! The signed signature will be embedded at the end of this file.
+--><rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
+  <channel>
+    <title>KillSwitch</title>
+    <link>https://github.com/DrakeMikels/KillSwitch</link>
+    <item>
+      <title>1.0.1</title>
+      <pubDate>Wed, 22 Apr 2026 00:14:17 +0000</pubDate>
+      <link>https://github.com/DrakeMikels/KillSwitch/releases/tag/v1.0.1</link>
+      <sparkle:version>1.0.1</sparkle:version>
+      <sparkle:shortVersionString>1.0.1</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <enclosure url="https://github.com/DrakeMikels/KillSwitch/releases/download/v1.0.1/KillSwitch.zip" length="1649653" type="application/octet-stream" sparkle:edSignature="vM3Stpth2Z1WUloVdkDx8x14mlOFrsbUX5Kg4I9xX0vzCl9zaVdCJP9X7PojMX7h5RHx8c5Po3ksfU2+0bLSAg=="></enclosure>
+    </item>
+  </channel>
+</rss><!-- sparkle-signatures:
+edSignature: 1+qJ8GkOfq7k3jYT+kx/uQ4/u26epNbX5fuTDR5WWA0pjXDtaQYyU4+pv+UmfX32J6+yaUlvmlZPbW8Nt1/pCw==
+length: 1209
+-->

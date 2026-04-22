@@ -7,15 +7,19 @@ BUNDLE_ID="com.killswitch.app"
 MIN_SYSTEM_VERSION="14.0"
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# shellcheck source=/dev/null
+source "$ROOT_DIR/script/updater_config.sh"
 DIST_DIR="$ROOT_DIR/dist/release"
 APP_BUNDLE="$DIST_DIR/$APP_NAME.app"
 APP_CONTENTS="$APP_BUNDLE/Contents"
 APP_MACOS="$APP_CONTENTS/MacOS"
 APP_RESOURCES="$APP_CONTENTS/Resources"
+APP_FRAMEWORKS="$APP_CONTENTS/Frameworks"
 APP_BINARY="$APP_MACOS/$APP_NAME"
 INFO_PLIST="$APP_CONTENTS/Info.plist"
 ZIP_PATH="$DIST_DIR/$APP_NAME.zip"
 DMG_PATH="$DIST_DIR/$APP_NAME.dmg"
+APPCAST_PATH="$DIST_DIR/appcast.xml"
 API_KEY_PATH="$DIST_DIR/AuthKey.p8"
 
 resolve_developer_dir() {
@@ -43,6 +47,46 @@ resolve_developer_dir() {
 DEVELOPER_DIR="$(resolve_developer_dir)"
 export DEVELOPER_DIR
 
+copy_sparkle_framework() {
+  local sparkle_framework
+  sparkle_framework="$("$ROOT_DIR/script/resolve_sparkle_distribution.sh" --framework)"
+
+  mkdir -p "$APP_FRAMEWORKS"
+  /usr/bin/ditto "$sparkle_framework" "$APP_FRAMEWORKS/Sparkle.framework"
+}
+
+ensure_app_framework_rpath() {
+  if ! otool -l "$APP_BINARY" | grep -A2 LC_RPATH | grep -q "@executable_path/../Frameworks"; then
+    install_name_tool -add_rpath "@executable_path/../Frameworks" "$APP_BINARY"
+  fi
+}
+
+codesign_artifact() {
+  local artifact_path="$1"
+
+  [[ -n "${CODESIGN_IDENTITY:-}" ]] || return 0
+
+  codesign \
+    --force \
+    --options runtime \
+    --timestamp \
+    --sign "$CODESIGN_IDENTITY" \
+    "$artifact_path"
+}
+
+codesign_embedded_sparkle() {
+  local sparkle_framework="$APP_FRAMEWORKS/Sparkle.framework"
+
+  [[ -n "${CODESIGN_IDENTITY:-}" ]] || return 0
+  [[ -d "$sparkle_framework" ]] || return 0
+
+  codesign_artifact "$sparkle_framework/Versions/B/Autoupdate"
+  codesign_artifact "$sparkle_framework/Versions/B/XPCServices/Downloader.xpc"
+  codesign_artifact "$sparkle_framework/Versions/B/XPCServices/Installer.xpc"
+  codesign_artifact "$sparkle_framework/Versions/B/Updater.app"
+  codesign_artifact "$sparkle_framework"
+}
+
 mkdir -p "$DIST_DIR"
 
 swift ./script/render_app_icon.swift
@@ -53,11 +97,14 @@ rm -rf "$APP_BUNDLE"
 mkdir -p "$APP_MACOS"
 cp "$BUILD_BINARY" "$APP_BINARY"
 chmod +x "$APP_BINARY"
+ensure_app_framework_rpath
 
 if [[ -d "$ROOT_DIR/Resources" ]]; then
   mkdir -p "$APP_RESOURCES"
   cp -R "$ROOT_DIR/Resources/." "$APP_RESOURCES/"
 fi
+
+copy_sparkle_framework
 
 cat >"$INFO_PLIST" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
@@ -84,18 +131,22 @@ cat >"$INFO_PLIST" <<PLIST
   <true/>
   <key>NSPrincipalClass</key>
   <string>NSApplication</string>
+  <key>SUAutomaticallyUpdate</key>
+  <true/>
+  <key>SUEnableAutomaticChecks</key>
+  <true/>
+  <key>SUFeedURL</key>
+  <string>$SPARKLE_APPCAST_URL</string>
+  <key>SUPublicEDKey</key>
+  <string>$SPARKLE_PUBLIC_ED_KEY</string>
+  <key>SUVerifyUpdateBeforeExtraction</key>
+  <true/>
 </dict>
 </plist>
 PLIST
 
-if [[ -n "${CODESIGN_IDENTITY:-}" ]]; then
-  codesign \
-    --force \
-    --options runtime \
-    --timestamp \
-    --sign "$CODESIGN_IDENTITY" \
-    "$APP_BUNDLE"
-fi
+codesign_embedded_sparkle
+codesign_artifact "$APP_BUNDLE"
 
 package_zip() {
   rm -f "$ZIP_PATH"
@@ -170,9 +221,12 @@ else
   package_dmg
 fi
 
+"$ROOT_DIR/script/generate_appcast.sh" "$VERSION" "$ZIP_PATH" "$APPCAST_PATH"
+
 rm -f "$API_KEY_PATH"
 
 printf 'Packaged %s\n' "$ZIP_PATH"
 shasum -a 256 "$ZIP_PATH"
 printf 'Packaged %s\n' "$DMG_PATH"
 shasum -a 256 "$DMG_PATH"
+printf 'Packaged %s\n' "$APPCAST_PATH"

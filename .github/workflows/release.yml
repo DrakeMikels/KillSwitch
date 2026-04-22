@@ -81,6 +81,7 @@ jobs:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          SPARKLE_PRIVATE_ED_KEY: ${{ secrets.SPARKLE_PRIVATE_ED_KEY }}
         run: ./script/package_release.sh "${{ steps.version.outputs.value }}"
 
       - name: Generate Homebrew cask
@@ -96,6 +97,7 @@ jobs:
           path: |
             dist/release/KillSwitch.zip
             dist/release/KillSwitch.dmg
+            dist/release/appcast.xml
             dist/release/killswitch.rb
 
       - name: Publish GitHub Release assets
@@ -112,8 +114,41 @@ jobs:
           gh release upload "$TAG" \
             dist/release/KillSwitch.zip \
             dist/release/KillSwitch.dmg \
+            dist/release/appcast.xml \
             dist/release/killswitch.rb \
             --clobber
+
+  publish-appcast:
+    needs: package
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download release artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: killswitch-release-${{ needs.package.outputs.version }}
+          path: dist/release
+
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+
+      - name: Commit and push latest appcast
+        shell: bash
+        run: |
+          cp dist/release/appcast.xml appcast.xml
+
+          if git diff --quiet -- appcast.xml; then
+            echo "Appcast is already up to date."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add appcast.xml
+          git commit -m "Update Sparkle appcast for v${{ needs.package.outputs.version }}"
+          git push
 
   publish-homebrew-cask:
     needs: package

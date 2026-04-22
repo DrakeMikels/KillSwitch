@@ -40,6 +40,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 self?.closePopover()
             }
         )
+        appServices.updateService.start()
 
         if CommandLine.arguments.contains("--open-settings") {
             logger.notice("Launching with --open-settings")

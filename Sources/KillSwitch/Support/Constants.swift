@@ -16,5 +16,4 @@ enum AppConstants {
     static let settingsWindowID = "settings"
     static let minimumSystemVersion = "14.0"
     static let topApplicationCount = 6
-    static let releasesURL: URL? = nil
 }

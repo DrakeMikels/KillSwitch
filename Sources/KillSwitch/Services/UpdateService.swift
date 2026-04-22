@@ -1,20 +1,32 @@
-import AppKit
 import Foundation
+import Sparkle
 
-struct UpdateService {
-    let releasesURL: URL?
+@MainActor
+final class UpdateService: NSObject {
+    private let updaterController: SPUStandardUpdaterController
+    private var hasStarted = false
 
-    init(releasesURL: URL? = AppConstants.releasesURL) {
-        self.releasesURL = releasesURL
+    override init() {
+        self.updaterController = SPUStandardUpdaterController(
+            startingUpdater: false,
+            updaterDelegate: nil,
+            userDriverDelegate: nil
+        )
+        super.init()
     }
 
     var isConfigured: Bool {
-        releasesURL != nil
+        hasStarted ? updaterController.updater.canCheckForUpdates : true
+    }
+
+    func start() {
+        guard !hasStarted else { return }
+        updaterController.startUpdater()
+        hasStarted = true
     }
 
     func checkForUpdates() {
-        guard let releasesURL else { return }
-        NSWorkspace.shared.open(releasesURL)
+        start()
+        updaterController.checkForUpdates(nil)
     }
 }
-

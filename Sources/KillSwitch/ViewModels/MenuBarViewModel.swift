@@ -26,7 +26,7 @@ final class MenuBarViewModel: ObservableObject {
         runningApplicationsService: RunningApplicationsService = RunningApplicationsService(),
         processMemoryService: ProcessMemoryService = ProcessMemoryService(),
         applicationQuitService: ApplicationQuitService = ApplicationQuitService(),
-        updateService: UpdateService = UpdateService()
+        updateService: UpdateService
     ) {
         self.settingsStore = settingsStore
         self.memoryMonitorService = memoryMonitorService
@@ -166,11 +166,6 @@ final class MenuBarViewModel: ObservableObject {
     }
 
     func checkForUpdates() {
-        guard updateService.isConfigured else {
-            statusMessage = "Update checks are not wired yet."
-            return
-        }
-
         updateService.checkForUpdates()
     }
 
